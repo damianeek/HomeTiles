@@ -105,4 +105,30 @@ for (const [file, marker] of [
   requireMarker(read(file), marker, `${file} release documentation`);
 }
 
+const hardwareIoSource = read(`${base}/hardware_io_profile.h`);
+const expectedHardwareIoGpios = [28, 29, 30, 31, 32, 33, 34, 49, 50, 51, 52];
+const gpioEntries = [...hardwareIoSource.matchAll(/\{\s*(\d+)\s*,/g)].map((entry) => Number(entry[1]));
+assert.deepEqual(gpioEntries, expectedHardwareIoGpios);
+for (const gpio of expectedHardwareIoGpios) {
+  requireMarker(hardwareIoSource, `{${gpio}, Device::kHardwareIoPinSwitch | Device::kHardwareIoPinTemperature,`, `hardware I/O GPIO ${gpio} capabilities`);
+  requireMarker(hardwareIoSource, `"Expand GPIO ${gpio}"`, `hardware I/O GPIO ${gpio} label`);
+}
+assert.ok(!hardwareIoSource.includes(`kHardwareIoPinOnboard`), `onboard capability must stay absent`);
+assert.ok(!hardwareIoSource.includes(`HardwareIoOutputLogic`), `output logic must stay absent`);
+const reservedHardwareIoGpios = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 53, 54];
+for (const gpio of reservedHardwareIoGpios) {
+  assert.ok(!gpioEntries.includes(gpio), `reserved GPIO ${gpio} must stay absent`);
+  assert.ok(!new RegExp(`\\{\\s*${gpio}\\s*,`).test(hardwareIoSource), `reserved GPIO ${gpio} entry must stay absent`);
+}
+requireMarker(profile, `#include "src/devices/guition_jc4880p443_portrait/hardware_io_profile.h"`, `hardware I/O header include`);
+requireMarker(profile, `kHardwareIoProfile,`, `hardware I/O profile reference`);
+assert.ok(!profile.includes(`kNoHardwareIoProfile`), `empty hardware I/O profile must be gone`);
+const hardwareIoDocs = read(`docs/hardware-io.md`);
+const hardwareIoDocRow = hardwareIoDocs.split(`\n`).find((line) => line.includes(`Guition JC4880P443`));
+assert.ok(hardwareIoDocRow, `hardware I/O docs row is missing`);
+const hardwareIoDocGpioSegment = hardwareIoDocRow.match(/GPIO\s+([\d,\s]+)/);
+assert.ok(hardwareIoDocGpioSegment, `hardware I/O docs GPIO list is missing`);
+const hardwareIoDocGpios = hardwareIoDocGpioSegment[1].split(`,`).map((part) => Number(part.trim())).filter((value) => Number.isInteger(value));
+assert.deepEqual(hardwareIoDocGpios, expectedHardwareIoGpios);
+
 console.log('Guition JC4880P443 portrait profile contract: PASS');

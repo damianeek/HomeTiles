@@ -2,6 +2,7 @@
 
 #include "src/devices/device_select.h"
 #include "src/devices/device_types.h"
+#include "src/devices/guition_jc4880p443_portrait/hardware_io_profile.h"
 
 namespace DeviceGuitionJC4880P443PortraitProfile {
 
@@ -30,7 +31,7 @@ inline constexpr Device::Profile kProfile{
     0,
     2,
     Device::Capabilities{false, false, false, false, true, false, kBuiltinCamera},
-    Device::kNoHardwareIoProfile,
+    kHardwareIoProfile,
 };
 
 }  // namespace DeviceGuitionJC4880P443PortraitProfile
